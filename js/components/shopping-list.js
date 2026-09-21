@@ -9,8 +9,7 @@ const ShoppingList = {
   },
   data() {
     return {
-      checked: {},
-      collapsed: false
+      checked: {}
     };
   },
   computed: {
@@ -47,6 +46,9 @@ const ShoppingList = {
     },
     totalCount() {
       return this.grouped.length;
+    },
+    allChecked() {
+      return this.totalCount > 0 && this.checkedCount === this.totalCount;
     }
   },
   methods: {
@@ -55,8 +57,15 @@ const ShoppingList = {
       // force reactivity
       this.checked = { ...this.checked };
     },
-    toggleCollapse() {
-      this.collapsed = !this.collapsed;
+    // If everything is already checked, uncheck all. Otherwise check all.
+    toggleAll() {
+      if (this.allChecked) {
+        this.checked = {};
+      } else {
+        const next = {};
+        for (const g of this.grouped) next[g.item] = true;
+        this.checked = next;
+      }
     },
     copyList() {
       const text = this.grouped
@@ -71,6 +80,65 @@ const ShoppingList = {
     },
     clearChecks() {
       this.checked = {};
+    },
+    // Open a new window with a printable version of the list. Only items
+    // that are NOT checked (i.e. still to buy) are included, since checked
+    // items have presumably already been acquired.
+    printList() {
+      const items = this.grouped.filter(g => !this.checked[g.item]);
+      if (items.length === 0) {
+        window.alert('Nothing to print - all items are checked.');
+        return;
+      }
+      const esc = (s) => String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+      const rows = items.map(g => {
+        const amounts = g.amounts.length ? ' &mdash; ' + esc(g.amounts.join(', ')) : '';
+        return '<li><span class="box"></span><span class="name">' +
+               esc(g.item) + '</span>' + amounts + '</li>';
+      }).join('');
+      const date = new Date().toLocaleDateString();
+      const html = [
+        '<!DOCTYPE html>',
+        '<html lang="en"><head><meta charset="UTF-8">',
+        '<title>Shopping List</title>',
+        '<style>',
+        'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;',
+        '       margin: 2rem; color: #1b1b1b; }',
+        'h1 { font-size: 1.5rem; margin: 0 0 0.25rem 0; }',
+        '.meta { color: #71767a; font-size: 0.875rem; margin-bottom: 1.5rem; }',
+        'ul { list-style: none; padding: 0; margin: 0; }',
+        'li { display: flex; align-items: baseline; gap: 0.5rem;',
+        '     padding: 0.5rem 0; border-bottom: 1px solid #dfe1e2; font-size: 1.05rem; }',
+        '.box { display: inline-block; width: 14px; height: 14px;',
+        '       border: 1.5px solid #3d4551; border-radius: 2px; flex: 0 0 auto;',
+        '       transform: translateY(2px); }',
+        '.name { font-weight: 600; }',
+        '@media print {',
+        '  body { margin: 0.5in; }',
+        '  h1 { font-size: 1.25rem; }',
+        '  li { padding: 0.4rem 0; }',
+        '}',
+        '</style></head><body>',
+        '<h1>Shopping List</h1>',
+        '<div class="meta">' + items.length + ' item' + (items.length === 1 ? '' : 's') +
+          ' to buy &middot; ' + date + '</div>',
+        '<ul>' + rows + '</ul>',
+        '<script>window.onload = function(){ setTimeout(function(){ window.print(); }, 200); };<\/script>',
+        '</body></html>'
+      ].join('\n');
+
+      const w = window.open('', '_blank');
+      if (!w) {
+        window.alert('Could not open print window. Check that pop-ups are allowed for this site.');
+        return;
+      }
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
     }
   },
   template: `
@@ -79,29 +147,46 @@ const ShoppingList = {
         <h2 class="card-header" id="shopping-heading" style="border: none; margin: 0; padding: 0;">
           Shopping List
           <span style="font-size: 0.875rem; font-weight: 400; color: var(--color-base); margin-left: 0.5rem;">
-            ({{ checkedCount }} of {{ totalCount }} checked)
+            ({{ checkedCount }} bought &middot; {{ totalCount - checkedCount }} remaining)
           </span>
         </h2>
-        <div style="display: flex; gap: 0.5rem;">
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <button type="button" class="btn btn-primary btn-small" @click="printList">
+            Print remaining
+          </button>
           <button type="button" class="btn btn-secondary btn-small" @click="copyList">
-            {{ copyStatus || 'Copy list' }}
+            {{ copyStatus || 'Copy full list' }}
           </button>
           <button type="button" class="btn btn-secondary btn-small" @click="clearChecks">
-            Clear
-          </button>
-          <button
-            type="button"
-            class="btn btn-secondary btn-small"
-            @click="toggleCollapse"
-            :aria-expanded="!collapsed">
-            {{ collapsed ? 'Show' : 'Hide' }}
+            Uncheck all
           </button>
         </div>
       </div>
 
-      <div v-if="!collapsed" style="margin-top: 1rem;">
+      <div style="margin-top: 1rem;">
         <div v-if="grouped.length === 0" class="alert alert-info" role="status">
           No ingredients to show yet. Generate a menu first.
+        </div>
+
+        <p
+          v-else
+          style="margin: 0 0 0.75rem 0; font-size: 0.875rem; color: var(--color-base);">
+          Check off items as you buy them. <strong>Print remaining</strong> prints
+          only what you still need.
+        </p>
+
+        <div
+          v-else
+          style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 2px solid var(--color-base-light); margin-bottom: 0.5rem;">
+          <input
+            type="checkbox"
+            id="shop-toggle-all"
+            :checked="allChecked"
+            @change="toggleAll"
+            style="width: 1.25rem; height: 1.25rem;">
+          <label for="shop-toggle-all" style="font-weight: 600; cursor: pointer; flex: 1;">
+            {{ allChecked ? 'Uncheck all' : 'Select all' }}
+          </label>
         </div>
 
         <ul style="list-style: none; padding: 0; margin: 0;">

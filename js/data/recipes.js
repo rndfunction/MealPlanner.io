@@ -29,7 +29,27 @@ const RECIPES = [
     ],
     tags: ['vegetarian', 'nut-free', 'soy-free'],
     allergens: ['dairy', 'gluten'],
-    cuisine: 'american'
+    cuisine: 'american',
+    micros: {
+      vitaminA_ug: 139.2,
+      vitaminC_mg: 0.64,
+      vitaminD_ug: 3.12,
+      vitaminE_mg: 0.43,
+      vitaminK_ug: 1.46,
+      thiamin_mg: 0.34,
+      riboflavin_mg: 0.52,
+      niacin_mg: 1.06,
+      vitaminB6_mg: 0.16,
+      folate_ug: 29.73,
+      vitaminB12_ug: 1.27,
+      calcium_mg: 335.06,
+      iron_mg: 2.5,
+      magnesium_mg: 105.45,
+      phosphorus_mg: 450.91,
+      potassium_mg: 562.06,
+      zinc_mg: 2.97,
+      selenium_ug: 22.16
+    }
   },
   {
     id: 'bf-veggie-scramble',
@@ -55,7 +75,27 @@ const RECIPES = [
     ],
     tags: ['vegetarian', 'gluten-free', 'dairy-free', 'nut-free', 'soy-free'],
     allergens: ['egg'],
-    cuisine: 'american'
+    cuisine: 'american',
+    micros: {
+      vitaminA_ug: 499.37,
+      vitaminC_mg: 103.87,
+      vitaminD_ug: 3,
+      vitaminE_mg: 4.07,
+      vitaminK_ug: 157.8,
+      thiamin_mg: 0.14,
+      riboflavin_mg: 0.83,
+      niacin_mg: 1.1,
+      vitaminB6_mg: 0.57,
+      folate_ug: 171.79,
+      vitaminB12_ug: 1.34,
+      calcium_mg: 129.22,
+      iron_mg: 3.89,
+      magnesium_mg: 55.31,
+      phosphorus_mg: 342.67,
+      potassium_mg: 591.76,
+      zinc_mg: 2.35,
+      selenium_ug: 46.64
+    }
   },
   {
     id: 'bf-tofu-scramble',
@@ -81,7 +121,27 @@ const RECIPES = [
     ],
     tags: ['vegan', 'vegetarian', 'gluten-free', 'dairy-free', 'nut-free'],
     allergens: ['soy'],
-    cuisine: 'american'
+    cuisine: 'american',
+    micros: {
+      vitaminA_ug: 449.04,
+      vitaminC_mg: 173.14,
+      vitaminD_ug: 0,
+      vitaminE_mg: 2.88,
+      vitaminK_ug: 484.34,
+      thiamin_mg: 0.21,
+      riboflavin_mg: 0.25,
+      niacin_mg: 1.55,
+      vitaminB6_mg: 0.51,
+      folate_ug: 153.39,
+      vitaminB12_ug: 0,
+      calcium_mg: 446.08,
+      iron_mg: 5.87,
+      magnesium_mg: 138.88,
+      phosphorus_mg: 403.73,
+      potassium_mg: 885.05,
+      zinc_mg: 3.23,
+      selenium_ug: 30.27
+    }
   },
   {
     id: 'bf-greek-yogurt',
@@ -106,7 +166,27 @@ const RECIPES = [
     ],
     tags: ['vegetarian', 'nut-free', 'soy-free'],
     allergens: ['dairy', 'gluten'],
-    cuisine: 'mediterranean'
+    cuisine: 'mediterranean',
+    micros: {
+      vitaminA_ug: 4.27,
+      vitaminC_mg: 48.06,
+      vitaminD_ug: 0,
+      vitaminE_mg: 1.18,
+      vitaminK_ug: 9.56,
+      thiamin_mg: 0.15,
+      riboflavin_mg: 0.75,
+      niacin_mg: 1.44,
+      vitaminB6_mg: 0.25,
+      folate_ug: 46.78,
+      vitaminB12_ug: 1.8,
+      calcium_mg: 292.73,
+      iron_mg: 1.3,
+      magnesium_mg: 62.46,
+      phosphorus_mg: 406.61,
+      potassium_mg: 578.71,
+      zinc_mg: 2.01,
+      selenium_ug: 26.02
+    }
   },
   {
     id: 'bf-glutenfree-pancakes',
@@ -132,7 +212,27 @@ const RECIPES = [
     ],
     tags: ['vegetarian', 'gluten-free', 'dairy-free'],
     allergens: ['egg', 'tree nuts'],
-    cuisine: 'american'
+    cuisine: 'american',
+    micros: {
+      vitaminA_ug: 81.77,
+      vitaminC_mg: 5.13,
+      vitaminD_ug: 1.3,
+      vitaminE_mg: 19.86,
+      vitaminK_ug: 0.44,
+      thiamin_mg: 0.19,
+      riboflavin_mg: 1.19,
+      niacin_mg: 3.06,
+      vitaminB6_mg: 0.4,
+      folate_ug: 67.28,
+      vitaminB12_ug: 0.56,
+      calcium_mg: 288.57,
+      iron_mg: 3.79,
+      magnesium_mg: 220.28,
+      phosphorus_mg: 462.05,
+      potassium_mg: 838.65,
+      zinc_mg: 3.1,
+      selenium_ug: 19
+    }
   },
 
   // ============ LUNCH ============
@@ -160,7 +260,27 @@ const RECIPES = [
     ],
     tags: ['gluten-free', 'dairy-free', 'nut-free', 'soy-free', 'high-protein'],
     allergens: [],
-    cuisine: 'american'
+    cuisine: 'american',
+    micros: {
+      vitaminA_ug: 643.6,
+      vitaminC_mg: 7.44,
+      vitaminD_ug: 0.14,
+      vitaminE_mg: 4.83,
+      vitaminK_ug: 174.95,
+      thiamin_mg: 0.22,
+      riboflavin_mg: 0.29,
+      niacin_mg: 19.93,
+      vitaminB6_mg: 0.98,
+      folate_ug: 205.71,
+      vitaminB12_ug: 0.43,
+      calcium_mg: 78.68,
+      iron_mg: 3.2,
+      magnesium_mg: 69.07,
+      phosphorus_mg: 380.78,
+      potassium_mg: 807.05,
+      zinc_mg: 1.87,
+      selenium_ug: 39.88
+    }
   },
   {
     id: 'ln-quinoa-bowl',
@@ -186,7 +306,27 @@ const RECIPES = [
     ],
     tags: ['vegan', 'vegetarian', 'gluten-free', 'dairy-free'],
     allergens: ['sesame'],
-    cuisine: 'mediterranean'
+    cuisine: 'mediterranean',
+    micros: {
+      vitaminA_ug: 4.2,
+      vitaminC_mg: 3.24,
+      vitaminD_ug: 0,
+      vitaminE_mg: 1.53,
+      vitaminK_ug: 14.64,
+      thiamin_mg: 0.35,
+      riboflavin_mg: 0.28,
+      niacin_mg: 1.4,
+      vitaminB6_mg: 0.4,
+      folate_ug: 283.18,
+      vitaminB12_ug: 0,
+      calcium_mg: 97.78,
+      iron_mg: 6.24,
+      magnesium_mg: 175.99,
+      phosphorus_mg: 478.66,
+      potassium_mg: 734.62,
+      zinc_mg: 3.84,
+      selenium_ug: 9.46
+    }
   },
   {
     id: 'ln-turkey-wrap',
@@ -212,7 +352,27 @@ const RECIPES = [
     ],
     tags: ['dairy-free', 'nut-free', 'high-protein'],
     allergens: ['gluten'],
-    cuisine: 'american'
+    cuisine: 'american',
+    micros: {
+      vitaminA_ug: 240.36,
+      vitaminC_mg: 18.03,
+      vitaminD_ug: 0,
+      vitaminE_mg: 1.95,
+      vitaminK_ug: 69.57,
+      thiamin_mg: 0.11,
+      riboflavin_mg: 0.14,
+      niacin_mg: 1.82,
+      vitaminB6_mg: 0.28,
+      folate_ug: 135.26,
+      vitaminB12_ug: 0,
+      calcium_mg: 30.99,
+      iron_mg: 1.04,
+      magnesium_mg: 35.24,
+      phosphorus_mg: 68.16,
+      potassium_mg: 628.07,
+      zinc_mg: 0.69,
+      selenium_ug: 0.49
+    }
   },
   {
     id: 'ln-lentil-soup',
@@ -238,7 +398,27 @@ const RECIPES = [
     ],
     tags: ['vegan', 'vegetarian', 'gluten-free', 'dairy-free', 'nut-free', 'soy-free'],
     allergens: [],
-    cuisine: 'mediterranean'
+    cuisine: 'mediterranean',
+    micros: {
+      vitaminA_ug: 509.35,
+      vitaminC_mg: 9.47,
+      vitaminD_ug: 0,
+      vitaminE_mg: 0.55,
+      vitaminK_ug: 10.31,
+      thiamin_mg: 0.27,
+      riboflavin_mg: 0.14,
+      niacin_mg: 1.94,
+      vitaminB6_mg: 0.37,
+      folate_ug: 239.24,
+      vitaminB12_ug: 0,
+      calcium_mg: 55.58,
+      iron_mg: 4.26,
+      magnesium_mg: 56.02,
+      phosphorus_mg: 253.3,
+      potassium_mg: 718.3,
+      zinc_mg: 1.76,
+      selenium_ug: 3.7
+    }
   },
   {
     id: 'ln-tuna-salad',
@@ -264,7 +444,27 @@ const RECIPES = [
     ],
     tags: ['gluten-free', 'dairy-free', 'nut-free', 'high-protein'],
     allergens: ['fish', 'egg'],
-    cuisine: 'american'
+    cuisine: 'american',
+    micros: {
+      vitaminA_ug: 639.07,
+      vitaminC_mg: 7.23,
+      vitaminD_ug: 2.47,
+      vitaminE_mg: 2.68,
+      vitaminK_ug: 165.87,
+      thiamin_mg: 0.16,
+      riboflavin_mg: 0.21,
+      niacin_mg: 14.79,
+      vitaminB6_mg: 0.58,
+      folate_ug: 206.75,
+      vitaminB12_ug: 3.15,
+      calcium_mg: 68.62,
+      iron_mg: 2.88,
+      magnesium_mg: 60.71,
+      phosphorus_mg: 286.21,
+      potassium_mg: 726.47,
+      zinc_mg: 1.13,
+      selenium_ug: 114.78
+    }
   },
 
   // ============ DINNER ============
@@ -292,7 +492,27 @@ const RECIPES = [
     ],
     tags: ['gluten-free', 'dairy-free', 'nut-free', 'high-protein', 'omega-3'],
     allergens: ['fish'],
-    cuisine: 'american'
+    cuisine: 'american',
+    micros: {
+      vitaminA_ug: 1344.4,
+      vitaminC_mg: 203.48,
+      vitaminD_ug: 22.28,
+      vitaminE_mg: 10.29,
+      vitaminK_ug: 348.17,
+      thiamin_mg: 0.77,
+      riboflavin_mg: 1.27,
+      niacin_mg: 17.83,
+      vitaminB6_mg: 2.48,
+      folate_ug: 206.42,
+      vitaminB12_ug: 4.76,
+      calcium_mg: 195.35,
+      iron_mg: 3.46,
+      magnesium_mg: 138.85,
+      phosphorus_mg: 661.88,
+      potassium_mg: 2013.99,
+      zinc_mg: 2.15,
+      selenium_ug: 76.8
+    }
   },
   {
     id: 'dn-chicken-stirfry',
@@ -318,7 +538,27 @@ const RECIPES = [
     ],
     tags: ['dairy-free', 'nut-free', 'high-protein'],
     allergens: ['soy'],
-    cuisine: 'asian'
+    cuisine: 'asian',
+    micros: {
+      vitaminA_ug: 313.24,
+      vitaminC_mg: 340.32,
+      vitaminD_ug: 0.14,
+      vitaminE_mg: 4.7,
+      vitaminK_ug: 346.19,
+      thiamin_mg: 0.59,
+      riboflavin_mg: 0.66,
+      niacin_mg: 24.56,
+      vitaminB6_mg: 1.98,
+      folate_ug: 229.23,
+      vitaminB12_ug: 0.43,
+      calcium_mg: 148.73,
+      iron_mg: 4.7,
+      magnesium_mg: 168.46,
+      phosphorus_mg: 676.61,
+      potassium_mg: 1501.49,
+      zinc_mg: 3.85,
+      selenium_ug: 54.14
+    }
   },
   {
     id: 'dn-blackbean-tacos',
@@ -344,7 +584,27 @@ const RECIPES = [
     ],
     tags: ['vegan', 'vegetarian', 'gluten-free', 'dairy-free', 'nut-free', 'soy-free'],
     allergens: [],
-    cuisine: 'mexican'
+    cuisine: 'mexican',
+    micros: {
+      vitaminA_ug: 37.53,
+      vitaminC_mg: 16.47,
+      vitaminD_ug: 0,
+      vitaminE_mg: 3.01,
+      vitaminK_ug: 31.02,
+      thiamin_mg: 0.36,
+      riboflavin_mg: 0.19,
+      niacin_mg: 2.36,
+      vitaminB6_mg: 0.34,
+      folate_ug: 249.85,
+      vitaminB12_ug: 0,
+      calcium_mg: 53.61,
+      iron_mg: 3.27,
+      magnesium_mg: 113.5,
+      phosphorus_mg: 226.01,
+      potassium_mg: 962.69,
+      zinc_mg: 1.95,
+      selenium_ug: 2
+    }
   },
   {
     id: 'dn-beef-broccoli',
@@ -370,7 +630,27 @@ const RECIPES = [
     ],
     tags: ['dairy-free', 'nut-free', 'high-protein'],
     allergens: ['soy'],
-    cuisine: 'asian'
+    cuisine: 'asian',
+    micros: {
+      vitaminA_ug: 111.6,
+      vitaminC_mg: 234,
+      vitaminD_ug: 0,
+      vitaminE_mg: 2.95,
+      vitaminK_ug: 507.91,
+      thiamin_mg: 0.49,
+      riboflavin_mg: 0.51,
+      niacin_mg: 4.43,
+      vitaminB6_mg: 0.95,
+      folate_ug: 232.92,
+      vitaminB12_ug: 0,
+      calcium_mg: 173.79,
+      iron_mg: 3.48,
+      magnesium_mg: 135.27,
+      phosphorus_mg: 395.19,
+      potassium_mg: 1186.38,
+      zinc_mg: 2.56,
+      selenium_ug: 17.87
+    }
   },
   {
     id: 'dn-veggie-curry',
@@ -396,7 +676,27 @@ const RECIPES = [
     ],
     tags: ['vegan', 'vegetarian', 'gluten-free', 'dairy-free', 'nut-free', 'soy-free'],
     allergens: [],
-    cuisine: 'indian'
+    cuisine: 'indian',
+    micros: {
+      vitaminA_ug: 220.69,
+      vitaminC_mg: 14.66,
+      vitaminD_ug: 0,
+      vitaminE_mg: 1.36,
+      vitaminK_ug: 230.84,
+      thiamin_mg: 0.18,
+      riboflavin_mg: 0.16,
+      niacin_mg: 0.97,
+      vitaminB6_mg: 0.26,
+      folate_ug: 297.19,
+      vitaminB12_ug: 0,
+      calcium_mg: 105.13,
+      iron_mg: 4.74,
+      magnesium_mg: 94.57,
+      phosphorus_mg: 224.53,
+      potassium_mg: 610.34,
+      zinc_mg: 2.08,
+      selenium_ug: 4.91
+    }
   },
   {
     id: 'dn-shrimp-pasta',
@@ -422,7 +722,27 @@ const RECIPES = [
     ],
     tags: ['dairy-free', 'nut-free', 'high-protein'],
     allergens: ['shellfish', 'gluten'],
-    cuisine: 'italian'
+    cuisine: 'italian',
+    micros: {
+      vitaminA_ug: 91.85,
+      vitaminC_mg: 2.81,
+      vitaminD_ug: 0.17,
+      vitaminE_mg: 6.5,
+      vitaminK_ug: 18.64,
+      thiamin_mg: 0.05,
+      riboflavin_mg: 0.04,
+      niacin_mg: 4.49,
+      vitaminB6_mg: 0.38,
+      folate_ug: 25.78,
+      vitaminB12_ug: 2.38,
+      calcium_mg: 135.65,
+      iron_mg: 1.19,
+      magnesium_mg: 68.59,
+      phosphorus_mg: 428.81,
+      potassium_mg: 476.94,
+      zinc_mg: 2.89,
+      selenium_ug: 65.91
+    }
   },
   {
     id: 'dn-tofu-bowl',
@@ -448,7 +768,27 @@ const RECIPES = [
     ],
     tags: ['vegan', 'vegetarian', 'dairy-free', 'nut-free'],
     allergens: ['soy', 'gluten'],
-    cuisine: 'asian'
+    cuisine: 'asian',
+    micros: {
+      vitaminA_ug: 605.46,
+      vitaminC_mg: 160.09,
+      vitaminD_ug: 0,
+      vitaminE_mg: 2.45,
+      vitaminK_ug: 351.18,
+      thiamin_mg: 0.57,
+      riboflavin_mg: 0.5,
+      niacin_mg: 4.53,
+      vitaminB6_mg: 0.92,
+      folate_ug: 194.92,
+      vitaminB12_ug: 0,
+      calcium_mg: 478.57,
+      iron_mg: 7.32,
+      magnesium_mg: 216.36,
+      phosphorus_mg: 661.43,
+      potassium_mg: 1441.43,
+      zinc_mg: 4.89,
+      selenium_ug: 44.53
+    }
   },
 
   // ============ SNACKS ============
@@ -473,7 +813,27 @@ const RECIPES = [
     ],
     tags: ['vegan', 'vegetarian', 'gluten-free', 'dairy-free', 'soy-free'],
     allergens: ['tree nuts'],
-    cuisine: 'american'
+    cuisine: 'american',
+    micros: {
+      vitaminA_ug: 5.46,
+      vitaminC_mg: 8.37,
+      vitaminD_ug: 0,
+      vitaminE_mg: 4.19,
+      vitaminK_ug: 4,
+      thiamin_mg: 0.04,
+      riboflavin_mg: 0.2,
+      niacin_mg: 0.67,
+      vitaminB6_mg: 0.09,
+      folate_ug: 13.92,
+      vitaminB12_ug: 0,
+      calcium_mg: 66.34,
+      iron_mg: 0.78,
+      magnesium_mg: 53.66,
+      phosphorus_mg: 93,
+      potassium_mg: 314.19,
+      zinc_mg: 0.6,
+      selenium_ug: 0.38
+    }
   },
   {
     id: 'sn-hummus-veggies',
@@ -497,7 +857,27 @@ const RECIPES = [
     ],
     tags: ['vegan', 'vegetarian', 'gluten-free', 'dairy-free', 'nut-free'],
     allergens: ['sesame'],
-    cuisine: 'mediterranean'
+    cuisine: 'mediterranean',
+    micros: {
+      vitaminA_ug: 1068.92,
+      vitaminC_mg: 17.18,
+      vitaminD_ug: 0,
+      vitaminE_mg: 1.36,
+      vitaminK_ug: 41.27,
+      thiamin_mg: 0.27,
+      riboflavin_mg: 0.16,
+      niacin_mg: 1.85,
+      vitaminB6_mg: 0.39,
+      folate_ug: 98.97,
+      vitaminB12_ug: 0,
+      calcium_mg: 91.58,
+      iron_mg: 2.64,
+      magnesium_mg: 87.66,
+      phosphorus_mg: 214.12,
+      potassium_mg: 765.84,
+      zinc_mg: 1.99,
+      selenium_ug: 2.57
+    }
   },
   {
     id: 'sn-cheese-nuts',
@@ -520,7 +900,27 @@ const RECIPES = [
     ],
     tags: ['vegetarian', 'gluten-free', 'soy-free'],
     allergens: ['dairy', 'tree nuts'],
-    cuisine: 'american'
+    cuisine: 'american',
+    micros: {
+      vitaminA_ug: 75.13,
+      vitaminC_mg: 0,
+      vitaminD_ug: 0.17,
+      vitaminE_mg: 0.08,
+      vitaminK_ug: 0.68,
+      thiamin_mg: 0.01,
+      riboflavin_mg: 0.11,
+      niacin_mg: 0.02,
+      vitaminB6_mg: 0.02,
+      folate_ug: 7.65,
+      vitaminB12_ug: 0.31,
+      calcium_mg: 204.4,
+      iron_mg: 0.19,
+      magnesium_mg: 7.94,
+      phosphorus_mg: 145.15,
+      potassium_mg: 27.78,
+      zinc_mg: 0.88,
+      selenium_ug: 8.08
+    }
   },
   {
     id: 'sn-protein-smoothie',
@@ -545,7 +945,27 @@ const RECIPES = [
     ],
     tags: ['vegetarian', 'gluten-free', 'dairy-free', 'soy-free', 'high-protein'],
     allergens: ['tree nuts'],
-    cuisine: 'american'
+    cuisine: 'american',
+    micros: {
+      vitaminA_ug: 1.77,
+      vitaminC_mg: 5.13,
+      vitaminD_ug: 2.4,
+      vitaminE_mg: 6.78,
+      vitaminK_ug: 0.3,
+      thiamin_mg: 0.32,
+      riboflavin_mg: 1.29,
+      niacin_mg: 1.64,
+      vitaminB6_mg: 0.42,
+      folate_ug: 34.2,
+      vitaminB12_ug: 2.46,
+      calcium_mg: 954.15,
+      iron_mg: 2.87,
+      magnesium_mg: 65.13,
+      phosphorus_mg: 341.78,
+      potassium_mg: 831.22,
+      zinc_mg: 3.33,
+      selenium_ug: 16.07
+    }
   },
   {
     id: 'sn-hardboiled-eggs',
@@ -567,7 +987,27 @@ const RECIPES = [
     ],
     tags: ['vegetarian', 'gluten-free', 'dairy-free', 'nut-free', 'soy-free', 'high-protein'],
     allergens: ['egg'],
-    cuisine: 'american'
+    cuisine: 'american',
+    micros: {
+      vitaminA_ug: 160,
+      vitaminC_mg: 0,
+      vitaminD_ug: 2,
+      vitaminE_mg: 1.05,
+      vitaminK_ug: 0.3,
+      thiamin_mg: 0.04,
+      riboflavin_mg: 0.46,
+      niacin_mg: 0.08,
+      vitaminB6_mg: 0.17,
+      folate_ug: 47,
+      vitaminB12_ug: 0.89,
+      calcium_mg: 56,
+      iron_mg: 1.75,
+      magnesium_mg: 12,
+      phosphorus_mg: 198,
+      potassium_mg: 138,
+      zinc_mg: 1.29,
+      selenium_ug: 30.7
+    }
   },
   {
     id: 'sn-rice-cakes',
@@ -591,7 +1031,27 @@ const RECIPES = [
     ],
     tags: ['vegan', 'vegetarian', 'gluten-free', 'dairy-free', 'nut-free', 'soy-free'],
     allergens: [],
-    cuisine: 'american'
+    cuisine: 'american',
+    micros: {
+      vitaminA_ug: 5.25,
+      vitaminC_mg: 7.5,
+      vitaminD_ug: 0,
+      vitaminE_mg: 1.55,
+      vitaminK_ug: 15.75,
+      thiamin_mg: 0.05,
+      riboflavin_mg: 0.1,
+      niacin_mg: 1.31,
+      vitaminB6_mg: 0.2,
+      folate_ug: 60.75,
+      vitaminB12_ug: 0,
+      calcium_mg: 9,
+      iron_mg: 0.41,
+      magnesium_mg: 21.75,
+      phosphorus_mg: 39,
+      potassium_mg: 363.75,
+      zinc_mg: 0.48,
+      selenium_ug: 0.3
+    }
   }
 ];
 

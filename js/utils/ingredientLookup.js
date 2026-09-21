@@ -47,6 +47,161 @@ const UNIT_TO_BASE = {
 // Approximate densities (grams per milliliter) for common ingredients when
 // converting volume to mass. Values are rough but reasonable.
 const DENSITY_G_PER_ML = {
+  // Leafy greens and light produce: much lighter than water per cup.
+  // Values are grams per milliliter (i.e. grams per cup / 240).
+  'spinach': 0.13,       // 1 cup ~30g
+  'kale': 0.28,          // 1 cup ~67g
+  'romaine': 0.2,        // 1 cup ~47g
+  'iceberg': 0.3,        // 1 cup ~72g
+  'arugula': 0.08,       // 1 cup ~20g
+  'cabbage': 0.37,       // 1 cup shredded ~89g
+  'brussels-sprouts': 0.37,
+  'bok-choy': 0.3,
+  'swiss-chard': 0.15,   // 1 cup ~36g
+  'collard-greens': 0.15,
+  'cilantro': 0.07,      // 1 cup ~16g
+  'basil-fresh': 0.1,    // 1 cup ~24g
+  'mint-fresh': 0.1,
+  'parsley-dried': 0.15,
+  'basil-dried': 0.15,
+  'oregano': 0.15,
+  'thyme': 0.15,
+  'rosemary': 0.15,
+
+  // Berries and small fruits: ~0.6 g/ml
+  'blueberry': 0.62,     // 1 cup ~148g
+  'strawberry': 0.63,    // 1 cup sliced ~152g
+  'raspberry': 0.52,     // 1 cup ~123g
+  'blackberry': 0.6,
+  'cranberry': 0.5,
+  'cherry': 0.65,
+  'grape': 0.62,
+  'cherry-tomato': 0.62, // 1 cup ~149g
+  'grape-tomato': 0.62,
+
+  // Other produce with notable density differences
+  'cucumber': 0.5,       // 1 cup diced ~120g
+  'zucchini': 0.5,
+  'bell-pepper': 0.6,    // 1 cup diced ~150g
+  'mushroom': 0.3,       // 1 cup sliced ~70g
+  'portobello': 0.3,
+  'leek': 0.35,
+  'celery': 0.42,        // 1 cup diced ~101g
+  'shallot': 0.55,
+  'radish': 0.5,
+  'jalapeno': 0.6,
+  'poblano': 0.6,
+  'okra': 0.4,
+  'green-beans': 0.42,   // 1 cup ~100g
+  'peas': 0.6,           // 1 cup ~145g
+  'corn': 0.65,          // 1 cup ~165g
+  'beet': 0.57,          // 1 cup diced ~136g
+  'eggplant': 0.35,      // 1 cup diced ~82g
+  'pumpkin': 0.42,       // 1 cup mashed ~100g
+  'butternut-squash': 0.42,
+  'acorn-squash': 0.42,
+  'spaghetti-squash': 0.65, // cooked, shredded
+  'artichoke': 0.7,
+  'turnip': 0.54,
+  'onion': 0.67,         // 1 cup diced ~160g
+  'carrot': 0.53,        // 1 cup chopped ~128g
+  'sweet-potato': 0.7,   // 1 cup cubed ~133g (actually 0.55)
+  'potato': 0.63,        // 1 cup diced ~150g
+  'tomato': 0.75,        // 1 cup chopped ~180g
+  'avocado': 0.63,       // 1 cup cubed ~150g
+
+  // Oils and liquid fats: ~0.91-0.92 g/ml
+  'canola-oil': 0.92,
+  'sesame-oil': 0.92,
+  'avocado-oil': 0.91,
+  'peanut-oil': 0.91,
+  'ghee': 0.9,
+  'lard': 0.92,
+  'shortening': 0.85,
+
+  // Condiments
+  'ketchup': 1.05,
+  'mustard': 1.05,
+  'dijon': 1.05,
+  'hot-sauce': 1.05,
+  'bbq-sauce': 1.15,
+  'ranch': 1.0,
+  'italian-dressing': 0.95,
+  'caesar-dressing': 0.95,
+  'balsamic-vinegar': 1.04,
+  'apple-cider-vinegar': 1.01,
+  'red-wine-vinegar': 1.01,
+  'worcestershire': 1.1,
+  'fish-sauce': 1.2,
+  'oyster-sauce': 1.3,
+  'hoisin': 1.3,
+  'miso': 1.2,
+  'coconut-aminos': 1.05,
+  'tomato-sauce': 1.03,
+  'tomato-paste': 1.05,
+  'salsa-verde': 1.0,
+  'pesto': 0.95,
+  'honey-mustard': 1.15,
+  'mayo-light': 0.95,
+  'relish': 1.15,
+  'pickles': 1.0,
+  'olives-black': 0.6,
+  'olives-green': 0.6,
+  'capers': 0.6,
+  'sun-dried-tomato': 0.6,
+  'nutritional-yeast': 0.5,
+  'tamari': 1.15,
+  'sriracha': 1.05,
+  'gochujang': 1.2,
+
+  // Nuts & seeds
+  'cashews': 0.6,
+  'pecans': 0.5,
+  'pistachios': 0.6,
+  'macadamia': 0.6,
+  'hazelnuts': 0.6,
+  'pine-nuts': 0.6,
+  'brazil-nuts': 0.6,
+  'peanuts': 0.6,
+  'sunflower-seeds': 0.6,
+  'pumpkin-seeds': 0.6,
+  'sesame-seeds': 0.6,
+  'poppy-seeds': 0.55,
+  'sesame-butter': 1.08,
+  'cashew-butter': 1.0,
+
+  // Spices
+  'salt': 1.2,
+  'black-pepper': 0.5,
+  'basil-dried': 0.2,
+  'oregano': 0.2,
+  'thyme': 0.2,
+  'rosemary': 0.2,
+  'parsley-dried': 0.2,
+  'cinnamon': 0.5,
+  'cumin': 0.5,
+  'paprika': 0.5,
+  'chili-powder': 0.5,
+  'cayenne': 0.5,
+  'garlic-powder': 0.5,
+  'onion-powder': 0.5,
+  'nutmeg': 0.5,
+  'cocoa-powder': 0.5,
+  'baking-powder': 0.9,
+  'baking-soda': 0.9,
+
+  // Grains
+  'barley': 0.8,
+  'farro': 0.8,
+  'bulgur': 0.7,
+  'couscous': 0.7,
+  'buckwheat': 0.8,
+  'millet': 0.8,
+  'polenta': 0.7,
+  'gnocchi': 0.9,
+  'couscous-pearl': 0.8,
+
+  // Original entries
   'oats': 0.41,
   'rice-white': 0.85,
   'rice-brown': 0.85,
@@ -94,6 +249,17 @@ function normalize(str) {
 /**
  * Score how well `query` matches an ingredient entry. Higher is better.
  * Considers name match, alias matches, and token overlap.
+ *
+ * Scoring:
+ *   100 = exact match
+ *    85 = starts-with match (entry begins with query)
+ *    70 = query contains entry, or entry contains query (substring)
+ *    60 = 2+ shared tokens (multi-word overlap)
+ *    <60 = single-token overlap, treated as too weak to count
+ *
+ * The 60 floor matters: a single shared word (like "mixed") is NOT enough
+ * to consider two ingredients a match. This prevents "mixed berries" from
+ * matching "mixed greens" simply because they share one word.
  */
 function scoreMatch(entry, query) {
   const q = normalize(query);
@@ -101,27 +267,36 @@ function scoreMatch(entry, query) {
 
   const candidates = [entry.name, ...(entry.aliases || [])].map(normalize);
   let best = 0;
+  const qTokens = q.split(' ').filter(Boolean);
   for (const c of candidates) {
     if (c === q) { best = Math.max(best, 100); continue; }
+    if (c.startsWith(q + ' ') || c === q) { best = Math.max(best, 85); continue; }
     if (c.startsWith(q)) { best = Math.max(best, 80); continue; }
-    if (c.includes(q))   { best = Math.max(best, 60); continue; }
-    // token overlap
-    const cTokens = new Set(c.split(' '));
-    const qTokens = q.split(' ');
+    if (c.includes(q) || q.includes(c)) { best = Math.max(best, 70); continue; }
+    // Token overlap: require 2+ shared tokens (unless query is 1 token
+    // and it exactly equals a token in the entry, then give a modest score).
+    const cTokens = new Set(c.split(' ').filter(Boolean));
     let hits = 0;
     for (const t of qTokens) if (cTokens.has(t)) hits++;
-    if (hits > 0) best = Math.max(best, 30 + hits * 10);
+    if (hits >= 2) {
+      best = Math.max(best, 60 + (hits - 2) * 5);
+    } else if (hits === 1 && qTokens.length === 1) {
+      // Single-word query matching a single token in a multi-word entry:
+      // weak, but useful for queries like "berries" if a bare match exists.
+      best = Math.max(best, 45);
+    }
   }
   return best;
 }
 
 /**
  * Search the ingredient table. Returns up to `limit` matches sorted by score.
+ * Only returns matches at or above the confidence threshold (60).
  */
 function searchIngredients(query, limit) {
   const pool = (window.INGREDIENTS || []);
   const scored = pool.map(e => ({ entry: e, score: scoreMatch(e, query) }))
-                     .filter(x => x.score > 0)
+                     .filter(x => x.score >= 60)
                      .sort((a, b) => b.score - a.score);
   return scored.slice(0, limit || 5).map(x => x.entry);
 }

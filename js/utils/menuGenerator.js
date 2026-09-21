@@ -401,12 +401,20 @@ function regenerateSlot(options, dayEntries, slotIndex) {
   const newRecipe = pickForSlot(pool, targetEntry.slot, remaining, usedIds, { cuisines }, avoid);
   if (!newRecipe) return dayEntries;
 
+  // Preserve the slot's current servings multiplier so replacing a 1.5x
+  // recipe with another recipe keeps roughly the same portion size. This
+  // avoids the "swap something out and back in, and the target shifts"
+  // bug where a re-roll silently reset a scaled serving to 1.
+  const prevServings = targetEntry.servings && targetEntry.servings > 0
+    ? targetEntry.servings
+    : 1;
+
   const next = dayEntries.slice();
   next[slotIndex] = {
     slot: targetEntry.slot,
     kind: 'recipe',
     recipe: newRecipe,
-    servings: 1,
+    servings: prevServings,
     targetCalories: targetEntry.targetCalories || 0
   };
   return next;
@@ -416,15 +424,34 @@ function regenerateSlot(options, dayEntries, slotIndex) {
  * Replace the recipe in a slot with a specific recipe chosen by the user.
  * Preserves slot shape, resets servings to 1, and clears kind to 'recipe'.
  */
+/**
+ * Replace the recipe in a slot with a specific recipe chosen by the user.
+ * Computes a serving multiplier that aims to land near the slot's calorie
+ * target (rounded to 0.25 increments, minimum 0.25), so a user picking a
+ * recipe doesn't end up wildly above or below the slot budget. If the slot
+ * has no target or the recipe has no calories, falls back to 1 serving.
+ */
 function setSlotRecipe(dayEntries, slotIndex, recipe) {
   if (slotIndex < 0 || slotIndex >= dayEntries.length || !recipe) return dayEntries;
   const next = dayEntries.slice();
   const slot = next[slotIndex];
+
+  let servings = 1;
+  const slotCal = slot.targetCalories || 0;
+  const recipeCal = recipe.calories || 0;
+  if (slotCal > 0 && recipeCal > 0) {
+    const raw = slotCal / recipeCal;
+    // Round to nearest 0.25, clamp to a reasonable range.
+    servings = Math.round(raw * 4) / 4;
+    if (servings < 0.25) servings = 0.25;
+    if (servings > 4) servings = 4;
+  }
+
   next[slotIndex] = {
     slot: slot.slot,
     kind: 'recipe',
     recipe,
-    servings: 1,
+    servings,
     targetCalories: slot.targetCalories || 0
   };
   return next;
@@ -447,6 +474,135 @@ function sumEntryMacro(entries, excludeIndex, field) {
 
 function zeroTotals() {
   return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, sodium: 0 };
+}
+
+/**
+ * Rework all recipe-kind slots in the day against a reduced target. Used
+ * when the user has logged food they've already eaten and wants the rest
+ * of the day replanned to still hit the original daily target.
+ *
+ * Strategy:
+ *   1. Subtract eaten macros from the daily targets to get a remaining budget.
+ *   2. Distribute the remaining calories across the reworkable slots by weight.
+ *   3. Re-pick each recipe-kind slot against the reduced remaining budget.
+ *   4. Run closeGap to fine-tune servings toward the reduced target.
+ *
+ * Slots with kind 'logged' or 'empty' are left alone.
+ *
+ * @param {object} options - { recipes, targets, dietTags, excludeAllergens, cuisines }
+ * @param {Array} dayEntries - current entries
+ * @param {object} alreadyEaten - totals already eaten today (calories, protein, carbs, fat)
+ * @returns {Array} new entries
+ */
+function reworkForRemaining(options, dayEntries, alreadyEaten) {
+  const {
+    recipes, targets,
+    dietTags = [], excludeAllergens = [], cuisines = []
+  } = options;
+
+  const eaten = {
+    calories: (alreadyEaten && alreadyEaten.calories) || 0,
+    protein:  (alreadyEaten && alreadyEaten.protein)  || 0,
+    carbs:    (alreadyEaten && alreadyEaten.carbs)    || 0,
+    fat:      (alreadyEaten && alreadyEaten.fat)      || 0
+  };
+
+  const remainingTargets = {
+    calories: Math.max(0, (targets.calories || 0) - eaten.calories),
+    protein:  Math.max(0, (targets.protein  || 0) - eaten.protein),
+    carbs:    Math.max(0, (targets.carbs    || 0) - eaten.carbs),
+    fat:      Math.max(0, (targets.fat      || 0) - eaten.fat)
+  };
+
+  const pool = Nutrition.filterRecipes(recipes, {
+    tags: dietTags,
+    allergens: excludeAllergens
+  });
+
+  // Identify which slots we'll rework (recipe-kind only) and distribute
+  // the remaining calories across them by weight.
+  const reworkable = [];
+  for (let i = 0; i < dayEntries.length; i++) {
+    const e = dayEntries[i];
+    if (e && (e.kind === 'recipe' || !e.kind)) reworkable.push({ idx: i, slot: e.slot });
+  }
+  if (reworkable.length === 0) return dayEntries.slice();
+
+  const perSlotCalories = distributeCalories(
+    remainingTargets.calories,
+    reworkable.map(r => r.slot)
+  );
+
+  // Start with a copy so 'logged' and 'empty' slots are untouched.
+  const next = dayEntries.slice();
+  const usedIds = new Set();
+  // Reserve recipes already used in kept slots.
+  next.forEach(e => {
+    if (!e) return;
+    const kind = e.kind || (e.recipe ? 'recipe' : null);
+    if (kind === 'logged' || kind === 'empty') return;
+    // We'll be replacing these; skip reservation.
+  });
+  // Reserve recipes in slots we're NOT reworking.
+  const reworkSet = new Set(reworkable.map(r => r.idx));
+  next.forEach((e, i) => {
+    if (reworkSet.has(i)) return;
+    if (e && e.recipe && e.recipe.id) usedIds.add(e.recipe.id);
+  });
+
+  for (const r of reworkable) {
+    const slot = r.slot;
+    const slotTarget = perSlotCalories[slot] || 0;
+
+    // Remaining budget for this slot after prior picks in this pass.
+    const remaining = {
+      calories: Math.max(0, remainingTargets.calories - sumReworkedCalories(next, reworkSet, r.idx, 'calories')),
+      protein:  Math.max(0, remainingTargets.protein  - sumReworkedCalories(next, reworkSet, r.idx, 'protein')),
+      carbs:    Math.max(0, remainingTargets.carbs    - sumReworkedCalories(next, reworkSet, r.idx, 'carbs')),
+      fat:      Math.max(0, remainingTargets.fat      - sumReworkedCalories(next, reworkSet, r.idx, 'fat'))
+    };
+
+    // Bias scoring by the slot's own calorie target by blending it in:
+    // if the slot is small, we still want a small recipe.
+    const slotRemaining = {
+      calories: slotTarget > 0 ? Math.min(remaining.calories, slotTarget) : remaining.calories,
+      protein: remaining.protein,
+      carbs: remaining.carbs,
+      fat: remaining.fat
+    };
+
+    const pick = pickForSlot(pool, slot, slotRemaining, usedIds, { cuisines }, next[r.idx] && next[r.idx].recipe);
+    if (!pick) continue;
+    usedIds.add(pick.id);
+    next[r.idx] = {
+      slot,
+      kind: 'recipe',
+      recipe: pick,
+      servings: 1,
+      targetCalories: Math.round(slotTarget)
+    };
+  }
+
+  // Final fine-tuning: closeGap on the reworked entries toward the reduced
+  // remaining calorie target.
+  const reworkedEntries = reworkable.map(r => next[r.idx]);
+  closeGap(reworkedEntries, remainingTargets);
+
+  return next;
+}
+
+// Helper for reworkForRemaining: sum a macro across already-reworked slots
+// (excluding the one currently being decided).
+function sumReworkedCalories(entries, reworkSet, skipIdx, field) {
+  let sum = 0;
+  reworkSet.forEach(i => {
+    if (i === skipIdx) return;
+    const e = entries[i];
+    if (!e || !e.recipe) return;
+    const v = e.recipe[field] || 0;
+    sum += v * (e.servings || 1);
+  });
+  return sum;
 }
 
 /**
@@ -476,6 +632,7 @@ if (typeof window !== 'undefined') {
     pickBestForSlot,
     buildEmptySlots,
     countCandidatesForSlot,
+    reworkForRemaining,
     zeroTotals
   };
 }
