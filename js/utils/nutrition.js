@@ -37,20 +37,103 @@ function sumNutrition(entries) {
     fiber: 0, sugar: 0, sodium: 0
   };
   for (const entry of entries) {
-    if (!entry || !entry.recipe) continue;
+    const macros = entryMacros(entry);
+    if (!macros) continue;
     const mult = entry.servings || 1;
-    const r = entry.recipe;
-    totals.calories += (r.calories || 0) * mult;
-    totals.protein  += (r.protein  || 0) * mult;
-    totals.carbs    += (r.carbs    || 0) * mult;
-    totals.fat      += (r.fat      || 0) * mult;
-    totals.fiber    += (r.fiber    || 0) * mult;
-    totals.sugar    += (r.sugar    || 0) * mult;
-    totals.sodium   += (r.sodium   || 0) * mult;
+    totals.calories += (macros.calories || 0) * mult;
+    totals.protein  += (macros.protein  || 0) * mult;
+    totals.carbs    += (macros.carbs    || 0) * mult;
+    totals.fat      += (macros.fat      || 0) * mult;
+    totals.fiber    += (macros.fiber    || 0) * mult;
+    totals.sugar    += (macros.sugar    || 0) * mult;
+    totals.sodium   += (macros.sodium   || 0) * mult;
   }
-  // round for display sanity
   for (const k of Object.keys(totals)) totals[k] = Math.round(totals[k]);
   return totals;
+}
+
+/**
+ * Extract the macro object from any entry kind:
+ *   - { kind: 'recipe', recipe: {...} }       -> the recipe
+ *   - { kind: 'logged', logged: {...} }       -> the logged nutrition
+ *   - { kind: 'empty' }                       -> null (contributes nothing)
+ *   - legacy { recipe: {...} } with no kind   -> treated as recipe
+ */
+function entryMacros(entry) {
+  if (!entry) return null;
+  const kind = entry.kind || (entry.recipe ? 'recipe' : null);
+  if (kind === 'recipe') return entry.recipe || null;
+  if (kind === 'logged') return entry.logged || null;
+  return null;
+}
+
+/**
+ * Sum micronutrients across an array of menu entries. Each entry may carry
+ * `micros` (from USDA or custom data) either directly on the recipe or on
+ * the logged object. Empty entries are skipped and don't count toward
+ * coverage.
+ *
+ * Returns { totals, coverage } where coverage is the fraction of
+ * considered entries that had any micronutrient data (0..1).
+ */
+function sumMicros(entries) {
+  const totals = {};
+  let withData = 0;
+  let considered = 0;
+
+  for (const entry of entries) {
+    const kind = entry && (entry.kind || (entry.recipe ? 'recipe' : null));
+    if (!entry || kind === 'empty') continue;
+    considered++;
+    const mult = entry.servings || 1;
+    const source = kind === 'logged' ? (entry.logged || {}) : (entry.recipe || {});
+    const micros = source.micros || {};
+    const keys = Object.keys(micros).filter(k => micros[k] != null && !isNaN(micros[k]));
+    if (keys.length === 0) continue;
+    withData++;
+    for (const k of keys) {
+      totals[k] = (totals[k] || 0) + (micros[k] * mult);
+    }
+  }
+
+  for (const k of Object.keys(totals)) totals[k] = Math.round(totals[k] * 100) / 100;
+
+  return {
+    totals,
+    coverage: considered > 0 ? withData / considered : 0,
+    entriesWithData: withData,
+    entriesConsidered: considered
+  };
+}
+
+/**
+ * Given micro totals and an RDA profile key, compute percentage of RDA per
+ * nutrient and a status. Uses 70% as "close", 100%+ as "met".
+ */
+function compareMicrosToRDA(microTotals, profileKey) {
+  const profile = (window.RDA && window.RDA[profileKey]) || {};
+  const meta = window.NUTRIENT_META || [];
+  const result = [];
+  for (const m of meta) {
+    const target = profile[m.key];
+    if (!target) continue;
+    const actual = microTotals[m.key] || 0;
+    const percent = Math.round((actual / target) * 100);
+    let status = 'under';
+    if (percent >= 100) status = 'met';
+    else if (percent >= 70) status = 'close';
+    result.push({
+      key: m.key,
+      label: m.label,
+      group: m.group,
+      unit: m.unit,
+      actual,
+      target,
+      percent,
+      status
+    });
+  }
+  return result;
 }
 
 /**
@@ -144,9 +227,14 @@ function statusClass(status) {
  * @param {object} filters - { tags: string[], allergens: string[], excludeTags: string[] }
  */
 function filterRecipes(recipes, filters) {
-  const requiredTags = filters.tags || [];
-  const excludedAllergens = filters.allergens || [];
-  const excludedTags = filters.excludeTags || [];
+  // Accept both naming conventions so callers can't accidentally pass the
+  // wrong keys and get an unfiltered list back. The planner uses
+  // { dietTags, excludeAllergens } while lower-level code uses
+  // { tags, allergens }. Both are honored.
+  const f = filters || {};
+  const requiredTags = f.tags || f.dietTags || [];
+  const excludedAllergens = f.allergens || f.excludeAllergens || [];
+  const excludedTags = f.excludeTags || [];
   return recipes.filter(r => {
     const rTags = r.tags || [];
     const rAllergens = r.allergens || [];
@@ -172,6 +260,9 @@ if (typeof window !== 'undefined') {
     calculateMacroTargets,
     caloriesFromMacros,
     sumNutrition,
+    entryMacros,
+    sumMicros,
+    compareMicrosToRDA,
     compareToTargets,
     macroPercentages,
     formatNumber,

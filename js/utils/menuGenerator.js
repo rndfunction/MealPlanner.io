@@ -107,24 +107,32 @@ function scoreRecipe(recipe, remaining, preferences) {
  * totals and remaining targets. Excludes recipes already used today.
  *
  * Uses weighted-random sampling over the top N candidates so consecutive
- * calls can return different (but still high-quality) recipes.
+ * calls can return different (but still high-quality) recipes. When
+ * `avoidRecipe` is provided (typically the recipe currently in the slot),
+ * a similarity penalty pushes the sampler away from that recipe so re-rolls
+ * feel meaningfully different even when the calorie slot is nearly unchanged.
  */
-function pickForSlot(pool, category, remaining, usedIds, preferences) {
+function pickForSlot(pool, category, remaining, usedIds, preferences, avoidRecipe) {
   const candidates = pool.filter(r => r.category === category && !usedIds.has(r.id));
   if (candidates.length === 0) return null;
 
   // Score every candidate.
-  const scored = candidates.map(r => ({
-    recipe: r,
-    score: scoreRecipe(r, remaining, preferences)
-  })).sort((a, b) => a.score - b.score);
+  const scored = candidates.map(r => {
+    let s = scoreRecipe(r, remaining, preferences);
+    // Similarity penalty vs. the recipe we're trying to move away from.
+    if (avoidRecipe) {
+      s += similarityPenalty(r, avoidRecipe);
+    }
+    return { recipe: r, score: s };
+  }).sort((a, b) => a.score - b.score);
 
-  // Consider the top N (or all if fewer), weight by inverse score so the
-  // best options are still favored but others can win.
-  const topN = scored.slice(0, Math.min(4, scored.length));
-  // Convert scores to weights. Lower score => higher weight.
-  // Use 1/(score + epsilon) so we never divide by zero.
-  const weights = topN.map(s => 1 / (s.score + 0.01));
+  // Consider a wider window of candidates so re-rolls have room to vary.
+  const windowSize = Math.min(8, scored.length);
+  const topN = scored.slice(0, windowSize);
+
+  // Weight by inverse score so the best options are still favored, but
+  // worse-in-window options get a real chance.
+  const weights = topN.map(s => 1 / (s.score + 0.05));
   const totalWeight = weights.reduce((a, b) => a + b, 0);
 
   let roll = Math.random() * totalWeight;
@@ -132,8 +140,27 @@ function pickForSlot(pool, category, remaining, usedIds, preferences) {
     roll -= weights[i];
     if (roll <= 0) return topN[i].recipe;
   }
-  // Fallback (shouldn't reach here)
   return topN[0].recipe;
+}
+
+/**
+ * Penalty added to a candidate's score based on how similar it is to
+ * `avoid`. Normalized by calories so we can compare across recipes of
+ * different sizes. Roughly: identical recipes get a big penalty; wildly
+ * different ones get almost none.
+ */
+function similarityPenalty(candidate, avoid) {
+  if (!candidate || !avoid) return 0;
+  const calScale = Math.max(100, (avoid.calories || 0) * 0.5);
+  const dc = (candidate.calories - (avoid.calories || 0)) / calScale;
+  const dp = (candidate.protein  - (avoid.protein  || 0)) / 25;
+  const dcar = (candidate.carbs  - (avoid.carbs    || 0)) / 40;
+  const df = (candidate.fat      - (avoid.fat      || 0)) / 20;
+  const distance = Math.sqrt(dc*dc + dp*dp + dcar*dcar + df*df);
+
+  // Very close matches get a strong push; distant ones get none.
+  const penalty = Math.max(0, 1.5 - distance) * 3;
+  return penalty;
 }
 
 /**
@@ -222,19 +249,113 @@ function generateDay(options) {
     totals.sodium   += recipe.sodium;
   }
 
-  // Round
-  for (const k of Object.keys(totals)) totals[k] = Math.round(totals[k]);
+  // Fill pass: nudge totals toward the daily target by adjusting servings
+  // on the largest meal(s) in 0.5 increments.
+  closeGap(entries, targets);
+
+  // Recompute totals from the (possibly adjusted) servings.
+  const finalTotals = zeroTotals();
+  for (const e of entries) {
+    const r = e.recipe;
+    if (!r) continue;
+    const mult = e.servings || 1;
+    finalTotals.calories += (r.calories || 0) * mult;
+    finalTotals.protein  += (r.protein  || 0) * mult;
+    finalTotals.carbs    += (r.carbs    || 0) * mult;
+    finalTotals.fat      += (r.fat      || 0) * mult;
+    finalTotals.fiber    += (r.fiber    || 0) * mult;
+    finalTotals.sugar    += (r.sugar    || 0) * mult;
+    finalTotals.sodium   += (r.sodium   || 0) * mult;
+  }
+  for (const k of Object.keys(finalTotals)) finalTotals[k] = Math.round(finalTotals[k]);
 
   return {
     entries,
-    totals,
+    totals: finalTotals,
     remaining: {
-      calories: Math.round(targets.calories - totals.calories),
-      protein:  Math.round(targets.protein  - totals.protein),
-      carbs:    Math.round(targets.carbs    - totals.carbs),
-      fat:      Math.round(targets.fat      - totals.fat)
+      calories: Math.round(targets.calories - finalTotals.calories),
+      protein:  Math.round(targets.protein  - finalTotals.protein),
+      carbs:    Math.round(targets.carbs    - finalTotals.carbs),
+      fat:      Math.round(targets.fat      - finalTotals.fat)
     }
   };
+}
+
+/**
+ * Adjust servings on the largest meal(s) to bring the day's calorie total
+ * within ~5% of the target. Only touches recipe-kind entries, never below
+ * 0.5 servings.
+ */
+function closeGap(entries, targets) {
+  const target = targets.calories || 0;
+  if (target <= 0) return;
+
+  const total = () => entries.reduce((sum, e) => {
+    if (!e || !e.recipe) return sum;
+    return sum + (e.recipe.calories || 0) * (e.servings || 1);
+  }, 0);
+
+  let guard = 20;
+  while (guard-- > 0) {
+    const cur = total();
+    const diff = target - cur;
+    const pctOff = target > 0 ? Math.abs(diff) / target : 0;
+    if (pctOff < 0.05) break;
+
+    let biggestIdx = -1;
+    let biggestCal = 0;
+    for (let i = 0; i < entries.length; i++) {
+      const e = entries[i];
+      if (!e || !e.recipe) continue;
+      const c = e.recipe.calories || 0;
+      if (c > biggestCal) { biggestCal = c; biggestIdx = i; }
+    }
+    if (biggestIdx < 0 || biggestCal === 0) break;
+
+    const e = entries[biggestIdx];
+    const currentServings = e.servings || 1;
+
+    if (diff > 0) {
+      // Under target. Bump by 0.5 servings, but stop if that would overshoot
+      // by more than the current gap (i.e. make things worse).
+      const bump = biggestCal * 0.5;
+      const projected = cur + bump;
+      if (Math.abs(projected - target) > Math.abs(diff)) break;
+      e.servings = Math.round((currentServings + 0.5) * 2) / 2;
+    } else {
+      // Over target. Trim 0.5 servings, floor at 0.5.
+      if (currentServings <= 0.5) {
+        // Try the next-largest meal if this one can't go smaller.
+        let secondIdx = -1, secondCal = 0;
+        for (let i = 0; i < entries.length; i++) {
+          if (i === biggestIdx) continue;
+          const e2 = entries[i];
+          if (!e2 || !e2.recipe) continue;
+          const c = e2.recipe.calories || 0;
+          if (c > secondCal && (e2.servings || 1) > 0.5) { secondCal = c; secondIdx = i; }
+        }
+        if (secondIdx < 0) break;
+        const e2 = entries[secondIdx];
+        e2.servings = Math.round(((e2.servings || 1) - 0.5) * 2) / 2;
+      } else {
+        e.servings = Math.round((currentServings - 0.5) * 2) / 2;
+      }
+    }
+  }
+}
+
+/**
+ * Count how many recipes in the pool are eligible for a given category
+ * under the active filter set. Used by the UI to warn when a slot has no
+ * meaningful re-roll variety (e.g. only one vegan breakfast recipe exists).
+ */
+function countCandidatesForSlot(recipes, category, filters) {
+  const f = filters || {};
+  const pool = Nutrition.filterRecipes(recipes, {
+    tags: f.dietTags || [],
+    allergens: f.excludeAllergens || []
+  });
+  return pool.filter(r => r.category === category).length;
 }
 
 /**
@@ -252,43 +373,95 @@ function regenerateSlot(options, dayEntries, slotIndex) {
   const targetEntry = dayEntries[slotIndex];
   if (!targetEntry) return dayEntries;
 
-  // Exclude recipes used in OTHER slots AND the current recipe itself.
-  const usedIds = new Set(
-    dayEntries.filter((_, i) => i !== slotIndex).map(e => e.recipe.id)
-  );
-  usedIds.add(targetEntry.recipe.id);
-
-  const remaining = {
-    calories: Math.max(0, targets.calories - sumEntryCalories(dayEntries, slotIndex, 'calories')),
-    protein:  Math.max(0, targets.protein  - sumEntryCalories(dayEntries, slotIndex, 'protein')),
-    carbs:    Math.max(0, targets.carbs    - sumEntryCalories(dayEntries, slotIndex, 'carbs')),
-    fat:      Math.max(0, targets.fat      - sumEntryCalories(dayEntries, slotIndex, 'fat'))
-  };
-
-  // Try randomized pick first. If the pool has only the current recipe,
-  // fall back to the same recipe (no alternative exists).
-  let newRecipe = pickForSlot(pool, targetEntry.slot, remaining, usedIds, { cuisines });
-  if (!newRecipe) {
-    // Only the current recipe matches — keep it.
-    return dayEntries;
+  // Collect recipe IDs used elsewhere (only recipe-kind entries count).
+  const usedIds = new Set();
+  dayEntries.forEach((e, i) => {
+    if (i === slotIndex || !e) return;
+    const kind = e.kind || (e.recipe ? 'recipe' : null);
+    if (kind === 'recipe' && e.recipe && e.recipe.id) usedIds.add(e.recipe.id);
+  });
+  // Also exclude the current slot's recipe if it has one.
+  if (targetEntry.recipe && targetEntry.recipe.id) {
+    usedIds.add(targetEntry.recipe.id);
   }
 
+  const remaining = {
+    calories: Math.max(0, targets.calories - sumEntryMacro(dayEntries, slotIndex, 'calories')),
+    protein:  Math.max(0, targets.protein  - sumEntryMacro(dayEntries, slotIndex, 'protein')),
+    carbs:    Math.max(0, targets.carbs    - sumEntryMacro(dayEntries, slotIndex, 'carbs')),
+    fat:      Math.max(0, targets.fat      - sumEntryMacro(dayEntries, slotIndex, 'fat'))
+  };
+
+  // Pass the current recipe as `avoidRecipe` so the picker actively steers
+  // away from re-returning the same (or a near-identical) choice.
+  const avoid = (targetEntry.kind === 'recipe' || !targetEntry.kind)
+    ? (targetEntry.recipe || null)
+    : null;
+
+  const newRecipe = pickForSlot(pool, targetEntry.slot, remaining, usedIds, { cuisines }, avoid);
+  if (!newRecipe) return dayEntries;
+
   const next = dayEntries.slice();
-  next[slotIndex] = { ...targetEntry, recipe: newRecipe };
+  next[slotIndex] = {
+    slot: targetEntry.slot,
+    kind: 'recipe',
+    recipe: newRecipe,
+    servings: 1,
+    targetCalories: targetEntry.targetCalories || 0
+  };
   return next;
 }
 
-function sumEntryCalories(entries, excludeIndex, field) {
+/**
+ * Replace the recipe in a slot with a specific recipe chosen by the user.
+ * Preserves slot shape, resets servings to 1, and clears kind to 'recipe'.
+ */
+function setSlotRecipe(dayEntries, slotIndex, recipe) {
+  if (slotIndex < 0 || slotIndex >= dayEntries.length || !recipe) return dayEntries;
+  const next = dayEntries.slice();
+  const slot = next[slotIndex];
+  next[slotIndex] = {
+    slot: slot.slot,
+    kind: 'recipe',
+    recipe,
+    servings: 1,
+    targetCalories: slot.targetCalories || 0
+  };
+  return next;
+}
+
+/**
+ * Sum a macro across all entries except the given index. Uses
+ * Nutrition.entryMacros so it handles recipe, logged, and empty entries.
+ */
+function sumEntryMacro(entries, excludeIndex, field) {
   let sum = 0;
   entries.forEach((e, i) => {
     if (i === excludeIndex) return;
-    sum += (e.recipe[field] || 0) * (e.servings || 1);
+    const macros = Nutrition.entryMacros(e);
+    if (!macros) return;
+    sum += (macros[field] || 0) * (e.servings || 1);
   });
   return sum;
 }
 
 function zeroTotals() {
   return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, sodium: 0 };
+}
+
+/**
+ * Build an array of empty slots for the given meal structure. Useful when
+ * starting a day from scratch or after "clear all".
+ */
+function buildEmptySlots(meals, snacksPerDay, targets) {
+  const slots = buildSlotList(meals, snacksPerDay);
+  const perSlotCalories = distributeCalories(targets.calories, slots);
+  return slots.map(slot => ({
+    slot,
+    kind: 'empty',
+    servings: 1,
+    targetCalories: Math.round(perSlotCalories[slot] || 0)
+  }));
 }
 
 // Expose globally
@@ -298,7 +471,11 @@ if (typeof window !== 'undefined') {
     distributeCalories,
     generateDay,
     regenerateSlot,
+    setSlotRecipe,
+    closeGap,
     pickBestForSlot,
+    buildEmptySlots,
+    countCandidatesForSlot,
     zeroTotals
   };
 }
