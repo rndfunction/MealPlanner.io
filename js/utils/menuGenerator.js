@@ -103,21 +103,51 @@ function scoreRecipe(recipe, remaining, preferences) {
 }
 
 /**
- * Pick the best recipe for a given category from the pool, given current
- * running totals and remaining targets. Excludes recipes already used today.
+ * Pick a recipe for a given category from the pool, given current running
+ * totals and remaining targets. Excludes recipes already used today.
+ *
+ * Uses weighted-random sampling over the top N candidates so consecutive
+ * calls can return different (but still high-quality) recipes.
  */
 function pickForSlot(pool, category, remaining, usedIds, preferences) {
   const candidates = pool.filter(r => r.category === category && !usedIds.has(r.id));
   if (candidates.length === 0) return null;
 
+  // Score every candidate.
+  const scored = candidates.map(r => ({
+    recipe: r,
+    score: scoreRecipe(r, remaining, preferences)
+  })).sort((a, b) => a.score - b.score);
+
+  // Consider the top N (or all if fewer), weight by inverse score so the
+  // best options are still favored but others can win.
+  const topN = scored.slice(0, Math.min(4, scored.length));
+  // Convert scores to weights. Lower score => higher weight.
+  // Use 1/(score + epsilon) so we never divide by zero.
+  const weights = topN.map(s => 1 / (s.score + 0.01));
+  const totalWeight = weights.reduce((a, b) => a + b, 0);
+
+  let roll = Math.random() * totalWeight;
+  for (let i = 0; i < topN.length; i++) {
+    roll -= weights[i];
+    if (roll <= 0) return topN[i].recipe;
+  }
+  // Fallback (shouldn't reach here)
+  return topN[0].recipe;
+}
+
+/**
+ * Deterministic pick — always returns the single best-scoring recipe.
+ * Used when the caller needs to know what the "ideal" choice would be.
+ */
+function pickBestForSlot(pool, category, remaining, usedIds, preferences) {
+  const candidates = pool.filter(r => r.category === category && !usedIds.has(r.id));
+  if (candidates.length === 0) return null;
   let best = null;
   let bestScore = Infinity;
   for (const r of candidates) {
     const s = scoreRecipe(r, remaining, preferences);
-    if (s < bestScore) {
-      bestScore = s;
-      best = r;
-    }
+    if (s < bestScore) { bestScore = s; best = r; }
   }
   return best;
 }
@@ -209,6 +239,8 @@ function generateDay(options) {
 
 /**
  * Re-roll a single slot in an existing day. Recomputes totals from scratch.
+ * Excludes the current recipe so the swap always produces a different recipe
+ * (as long as at least one alternative exists in the pool).
  */
 function regenerateSlot(options, dayEntries, slotIndex) {
   const { recipes, targets, dietTags = [], excludeAllergens = [], cuisines = [] } = options;
@@ -220,9 +252,11 @@ function regenerateSlot(options, dayEntries, slotIndex) {
   const targetEntry = dayEntries[slotIndex];
   if (!targetEntry) return dayEntries;
 
+  // Exclude recipes used in OTHER slots AND the current recipe itself.
   const usedIds = new Set(
     dayEntries.filter((_, i) => i !== slotIndex).map(e => e.recipe.id)
   );
+  usedIds.add(targetEntry.recipe.id);
 
   const remaining = {
     calories: Math.max(0, targets.calories - sumEntryCalories(dayEntries, slotIndex, 'calories')),
@@ -231,8 +265,13 @@ function regenerateSlot(options, dayEntries, slotIndex) {
     fat:      Math.max(0, targets.fat      - sumEntryCalories(dayEntries, slotIndex, 'fat'))
   };
 
-  const newRecipe = pickForSlot(pool, targetEntry.slot, remaining, usedIds, { cuisines });
-  if (!newRecipe) return dayEntries;
+  // Try randomized pick first. If the pool has only the current recipe,
+  // fall back to the same recipe (no alternative exists).
+  let newRecipe = pickForSlot(pool, targetEntry.slot, remaining, usedIds, { cuisines });
+  if (!newRecipe) {
+    // Only the current recipe matches — keep it.
+    return dayEntries;
+  }
 
   const next = dayEntries.slice();
   next[slotIndex] = { ...targetEntry, recipe: newRecipe };
@@ -259,6 +298,7 @@ if (typeof window !== 'undefined') {
     distributeCalories,
     generateDay,
     regenerateSlot,
+    pickBestForSlot,
     zeroTotals
   };
 }

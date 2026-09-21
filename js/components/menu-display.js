@@ -11,7 +11,8 @@ const MenuDisplay = {
   emits: ['reroll', 'view-recipe'],
   data() {
     return {
-      expandedIndex: null
+      expandedIndex: null,
+      highlightedIndex: null
     };
   },
   methods: {
@@ -23,7 +24,12 @@ const MenuDisplay = {
       this.expandedIndex = this.expandedIndex === index ? null : index;
     },
     reroll(index) {
+      // Briefly highlight the card so the swap is visually obvious.
+      this.highlightedIndex = index;
       this.$emit('reroll', index);
+      setTimeout(() => {
+        if (this.highlightedIndex === index) this.highlightedIndex = null;
+      }, 1200);
     },
     viewRecipe(recipe) {
       this.$emit('view-recipe', recipe);
@@ -49,9 +55,10 @@ const MenuDisplay = {
       <ul class="menu-list" role="list" style="list-style: none; padding: 0; margin: 0;">
         <li
           v-for="(entry, index) in entries"
-          :key="entry.recipe.id + '-' + index"
+          :key="index + '-' + entry.recipe.id"
           class="menu-item"
-          style="border: 1px solid var(--color-base-light); border-radius: 4px; padding: 1rem; margin-bottom: 1rem;">
+          :class="{ 'menu-item-highlight': highlightedIndex === index }"
+          style="border: 1px solid var(--color-base-light); border-radius: 4px; padding: 1rem; margin-bottom: 1rem; transition: background-color 0.4s ease, box-shadow 0.4s ease;">
 
           <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
             <div style="flex: 1 1 60%;">
